@@ -1,11 +1,12 @@
 from tkinter import *
 import random
-
+import time
 
 class Ball:
-    def __init__(self, canvas, paddle, color):
+    def __init__(self, canvas, paddle, score, color):
         self.canvas = canvas
         self.paddle = paddle
+        self.score = score
         self.id = canvas.create_oval(10, 10, 25, 25, fill=color)
         self.canvas.move(self.id, 245, 100)
         self.x = random.choice((-3, -2, -1, 1, 2, 3))
@@ -18,8 +19,9 @@ class Ball:
         paddle_pos = self.canvas.coords(self.paddle.id)
         if pos[2] >= paddle_pos[0] and pos[0] <= paddle_pos[2]:
             if pos[3] >= paddle_pos[1] and pos[3] <= paddle_pos[3]:
+                self.x += self.paddle.x
+                self.score.hit()
                 return True
-
         return False
 
     def draw(self):
@@ -68,27 +70,44 @@ class Paddle:
         self.x = 2
 
 
+class Score:
+    def __init__(self, canvas, color):
+        self.score = 0
+        self.canvas = canvas
+        self.id = canvas.create_text(450, 10, text=self.score, fill=color)
+
+    def hit(self):
+        self.score += 1
+        self.canvas.itemconfig(self.id, text=self.score)
+
+
 tk = Tk()
 tk.title("Game")
 tk.resizable(0, 0)
 tk.wm_attributes("-topmost", 1)
-c = Canvas(tk, width=500, height=400, bd=0, highlightthickness=0)
-c.pack()
+canvas = Canvas(tk, width=500, height=400, bd=0, highlightthickness=0)
+canvas.pack()
 tk.update()
 
-p = Paddle(c, 'blue')
-ball = Ball(c, p, 'red')
+score = Score(canvas, 'green')
+paddle = Paddle(canvas, 'red')
+ball = Ball(canvas, paddle, score, 'yellow')
+game_over_text = canvas.create_text(250, 200, text='GAME OVER', state='hidden')
 
 
 def update():
     if not ball.hit_bottom:
         ball.draw()
-        p.draw()
+        paddle.draw()
 
     tk.update_idletasks()
     tk.update()
     tk.after(10, update)
 
-
 tk.after(10, update)
 tk.mainloop()
+
+while True:
+    if ball.hit_bottom == True:
+        time.sleep(1)
+        canvas.itemconfig(game_over_text, state='normal')
